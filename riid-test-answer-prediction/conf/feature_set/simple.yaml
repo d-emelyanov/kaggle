@@ -1,0 +1,52 @@
+# @package _group_
+
+features:
+  data_questions:
+    query_path: preprocess.data_questions
+    query_params: null
+  data_lectures:
+    query_path: preprocess.data_lectures
+    query_params: null
+  feature_questions_flat:
+    query_path: preprocess.feature_questions_flat
+    query_params: null
+
+dataset:
+  drop_dataset:
+    query_path: utils.drop_table
+    query_params:
+      table: dataset_simple
+  create_dataset:
+    query_path: collector.feature
+    query_params:
+      table_output: dataset_simple
+      table_main: data_questions
+      table_order_by:
+        - row_id
+        - user_id
+        - content_id
+      table_columns:
+        # t0.row_id: row_id
+        # t0.user_id: user_id
+        # t0.content_id: content_id
+        target: target
+        prior_question_had_explanation: prior_question_had_explanation
+        question_type: question_type
+        is_first_question: is_first_question
+        part: part
+      table_join:
+        - table: feature_questions_flat
+          joins:
+            - left: row_id
+              right: row_id
+            - left: content_id
+              right: content_id
+            - left: user_id
+              right: user_id
+
+
+cleanup:
+  drop_dataset:
+    query_path: utils.drop_table
+    query_params:
+      table: dataset_simple

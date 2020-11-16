@@ -1,0 +1,64 @@
+# @package _global_
+
+defaults:
+    - env: null
+    - feature_set: null
+    - model: null
+
+root: riid-test-answer-prediction
+
+override: False
+
+jobs:
+    - ddl
+    - clickhouse
+    - collect_features
+    # - train_test_split
+    # - train
+    # - evaluate
+    # - mlflow
+    # - cleanup
+
+ddl:
+    _target_: ${root}.jobs.clickhouse.ClickhouseExecutor
+    sql_dir: ${env.sql_path}
+    sql:
+        lectures:
+            query_path: ddl.create_table_lectures
+        questions:
+            query_path: ddl.create_table_questions
+        train:
+            query_path: ddl.create_table_train
+
+clickhouse:
+    _target_: ${root}.jobs.clickhouse.ClickhouseExecutor
+    sql_dir: ${env.sql_path}
+    sql: ${feature_set.features}
+
+collect_features:
+    _target_: ${root}.jobs.clickhouse.ClickhouseExecutor
+    sql_dir: ${env.sql_path}
+    sql: ${feature_set.dataset}
+
+cleanup:
+    _target_: ${root}.jobs.clickhouse.ClickhouseExecutor
+    sql_dir: ${env.sql_path}
+    sql: ${feature_set.cleanup}
+
+train:
+    _target_: ${root}.jobs.ml.ModelTrainer
+    model: RFCModel
+    output: rfcmodel.pkl
+    params: null
+
+predict:
+    _target_: ${root}.jobs.ml.ModelPredictor
+    input: rfcmodel.pkl
+    source: test.csv
+    params:
+        batch_size: 1000
+
+mlflow:
+    _target_: ${root}.jobs.ml.ModelLogger
+    input: null
+
